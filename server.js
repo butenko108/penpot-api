@@ -5,6 +5,12 @@ const yauzl = require("yauzl");
 const path = require("path");
 const jsonDiff = require("json-diff");
 const jp = require("jsonpath");
+const Anthropic = require("@anthropic-ai/sdk");
+
+const anthropic = new Anthropic({
+	apiKey:
+		"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",
+});
 
 const app = express();
 app.use(express.json());
@@ -131,6 +137,16 @@ async function processExtractedFiles(extractDir, fileId) {
 
 	console.log(`Создан упрощенный файл: ${simplifiedJsonPath}`);
 	console.log(`Найдено компонентов: ${simplifiedData.components.length}`);
+
+	// Генерируем AST
+	// try {
+	// 	const astData = await generateASTWithClaude(simplifiedData);
+	// 	const astJsonPath = path.join(timestampedDir, "ast.json");
+	// 	await fs.writeFile(astJsonPath, astData);
+	// 	console.log(`Создан AST файл: ${astJsonPath}`);
+	// } catch (error) {
+	// 	console.log(`Ошибка создания AST: ${error.message}`);
+	// }
 }
 
 // Рекурсивное чтение JSON файлов
@@ -442,6 +458,54 @@ async function generateSimplifiedFromLatest(fileId) {
 	} catch (error) {
 		console.error(`Ошибка генерации simplified.json:`, error.message);
 		return false;
+	}
+}
+
+// Функция генерации AST через Claude
+async function generateASTWithClaude(simplifiedData) {
+	const prompt = `
+Задача: Создай AST (Abstract Syntax Tree) на основе данных UI компонентов из Penpot.
+
+Входные данные:
+${JSON.stringify(simplifiedData, null, 2)}
+
+Требования к AST:
+- Структурированное представление компонентов для генерации React компонентов
+- Включить все layout, styling, dimensions данные
+- Сохранить иерархию children
+- Подготовить метаданные для каждого элемента
+
+Верни только валидный JSON AST без дополнительных объяснений и без markdown форматирования.
+`;
+
+	console.log("Генерируем AST через Claude API...");
+
+	try {
+		const message = await anthropic.messages.create({
+			model: "claude-sonnet-4-20250514",
+			max_tokens: 4000,
+			messages: [
+				{
+					role: "user",
+					content: [{ type: "text", text: prompt }],
+				},
+			],
+		});
+
+		const textContent = message.content.find(
+			(content) => content.type === "text",
+		);
+		const rawResponse = textContent?.text || "No AST generated";
+
+		const cleanedResponse = rawResponse
+			.replace(/```json\s*/g, "")
+			.replace(/```\s*/g, "")
+			.trim();
+
+		return cleanedResponse;
+	} catch (error) {
+		console.error("Ошибка генерации AST через Claude:", error.message);
+		throw error;
 	}
 }
 

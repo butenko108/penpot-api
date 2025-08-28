@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/butenko108/penpot-api#readme",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.60.0",
     "axios": "^1.11.0",
     "express": "^5.1.0",
     "fs-extra": "^11.3.1",
