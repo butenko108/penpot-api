@@ -1,0 +1,28 @@
+{
+  "name": "penpot-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/butenko108/penpot-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/butenko108/penpot-api/issues"
+  },
+  "homepage": "https://github.com/butenko108/penpot-api#readme",
+  "dependencies": {
+    "axios": "^1.11.0",
+    "express": "^5.1.0",
+    "fs-extra": "^11.3.1",
+    "json-diff": "^1.0.6",
+    "jsonpath": "^1.1.1",
+    "yauzl": "^3.2.0"
+  }
+}
