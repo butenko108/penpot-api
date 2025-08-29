@@ -138,6 +138,13 @@ async function processExtractedFiles(extractDir, fileId) {
 	console.log(`Создан упрощенный файл: ${simplifiedJsonPath}`);
 	console.log(`Найдено компонентов: ${simplifiedData.components.length}`);
 
+	// Генерируем компоненты и Storybook
+	try {
+		await generateComponentsFromSimplified(timestampedDir, fileId);
+	} catch (error) {
+		console.log(`Ошибка создания компонентов: ${error.message}`);
+	}
+
 	// Генерируем AST
 	// try {
 	// 	const astData = await generateASTWithClaude(simplifiedData);
@@ -509,6 +516,149 @@ ${JSON.stringify(simplifiedData, null, 2)}
 	}
 }
 
+// Функция генерации React компонента через Claude
+async function generateReactComponentWithClaude(componentData, componentName) {
+	const prompt = `
+Создай React компонент на основе этих данных из Penpot:
+
+Данные компонента:
+${JSON.stringify(componentData, null, 2)}
+
+Требования:
+1. Компонент должен называться ${componentName}
+2. Используй современный React с функциональными компонентами
+3. Используй inline стили на основе данных styling и layout
+4. Включи поддержку пропсов для настройки
+5. Экспортируй компонент как default export
+
+Формат ответа: только код React компонента без markdown форматирования.
+`;
+
+	try {
+		const message = await anthropic.messages.create({
+			model: "claude-sonnet-4-20250514",
+			max_tokens: 2000,
+			messages: [{ role: "user", content: [{ type: "text", text: prompt }] }],
+		});
+
+		const textContent = message.content.find(
+			(content) => content.type === "text",
+		);
+		const rawResponse = textContent?.text || "";
+
+		const cleanedResponse = rawResponse
+			.replace(/```jsx\s*/g, "")
+			.replace(/```javascript\s*/g, "")
+			.replace(/```\s*/g, "")
+			.trim();
+
+		return cleanedResponse;
+	} catch (error) {
+		console.error("Ошибка генерации React компонента:", error.message);
+		throw error;
+	}
+}
+
+// Функция генерации Storybook файла через Claude
+async function generateStorybookWithClaude(componentName) {
+	const prompt = `
+Создай Storybook stories файл для React компонента ${componentName}:
+
+Требования:
+1. Импортируй компонент как DEFAULT EXPORT: import ${componentName} from '../components/${componentName}.jsx'
+2. Создай несколько stories с разными состояниями
+3. Включи controls для интерактивности
+4. Используй CSF3 формат (Component Story Format 3)
+5. Добавь метаданные для компонента
+6. ОБЯЗАТЕЛЬНО используй default import, НЕ именованный import
+
+Пример правильного импорта: 
+import ${componentName} from '../components/${componentName}.jsx';
+
+Формат ответа: только код Storybook stories без markdown форматирования.
+`;
+
+	try {
+		const message = await anthropic.messages.create({
+			model: "claude-sonnet-4-20250514",
+			max_tokens: 2000,
+			messages: [{ role: "user", content: [{ type: "text", text: prompt }] }],
+		});
+
+		const textContent = message.content.find(
+			(content) => content.type === "text",
+		);
+		const rawResponse = textContent?.text || "";
+
+		const cleanedResponse = rawResponse
+			.replace(/```typescript\s*/g, "")
+			.replace(/```javascript\s*/g, "")
+			.replace(/```jsx\s*/g, "")
+			.replace(/```\s*/g, "")
+			.trim();
+
+		return cleanedResponse;
+	} catch (error) {
+		console.error("Ошибка генерации Storybook:", error.message);
+		throw error;
+	}
+}
+
+// Функция генерации всех компонентов из simplified.json
+async function generateComponentsFromSimplified(extractDir, fileId) {
+	const simplifiedJsonPath = path.join(extractDir, "simplified.json");
+
+	if (!(await fs.pathExists(simplifiedJsonPath))) {
+		console.log("simplified.json не найден, пропускаем генерацию компонентов");
+		return;
+	}
+
+	const simplifiedData = await fs.readJson(simplifiedJsonPath);
+
+	// Создаем папки для компонентов и stories
+	const componentsDir = path.join(__dirname, "src/components");
+	const storiesDir = path.join(__dirname, "src/stories");
+
+	await fs.ensureDir(componentsDir);
+	await fs.ensureDir(storiesDir);
+
+	console.log(`Генерируем ${simplifiedData.components.length} компонентов...`);
+
+	for (const component of simplifiedData.components) {
+		const componentName = component.name
+			.replace(/\s+/g, "")
+			.replace(/[^a-zA-Z0-9]/g, "");
+
+		if (!componentName) continue;
+
+		try {
+			// Генерируем React компонент
+			const reactCode = await generateReactComponentWithClaude(
+				component,
+				componentName,
+			);
+			const componentPath = path.join(componentsDir, `${componentName}.jsx`);
+			await fs.writeFile(componentPath, reactCode);
+
+			// Генерируем Storybook файл
+			const storybookCode = await generateStorybookWithClaude(componentName);
+			const storyPath = path.join(storiesDir, `${componentName}.stories.jsx`);
+			await fs.writeFile(storyPath, storybookCode);
+
+			console.log(`✅ Сгенерирован компонент: ${componentName}`);
+		} catch (error) {
+			console.error(
+				`❌ Ошибка генерации компонента ${componentName}:`,
+				error.message,
+			);
+		}
+	}
+
+	console.log(`🎉 Генерация завершена! Компоненты в: ${componentsDir}`);
+	console.log(`📚 Stories в: ${storiesDir}`);
+	console.log(`🚀 Запустите Storybook: npm run storybook`);
+}
+
 // Webhook обработчик
 app.post("/", async (req, res) => {
 	console.log("---------------------------");
@@ -561,13 +711,12 @@ app.get("/", (req, res) => {
 		<h1>Penpot Webhook Handler</h1>
 		<p>Сервер работает и готов принимать webhooks</p>
 		<p>Файлы сохраняются в папку: ./history/</p>
+		<p>Компоненты генерируются в: ./src/components/</p>
 		
-		<h2>Ручная генерация</h2>
-		<form action="/generate-simplified/e7c79b0d-7aa0-808c-8006-b65cc7a884fe" method="post">
-			<button type="submit" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-				Сгенерировать Simplified JSON
-			</button>
-		</form>
+		<h3>Ссылки</h3>
+		<a href="http://localhost:6006" target="_blank" style="color: #007bff;">Открыть Storybook (порт 6006)</a>
+		<br><br>
+		<p>Для запуска Storybook выполните: <code>npm run storybook</code></p>
 	`);
 });
 

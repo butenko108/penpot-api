@@ -1,29 +1,40 @@
 {
-  "name": "penpot-api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/butenko108/penpot-api.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/butenko108/penpot-api/issues"
-  },
-  "homepage": "https://github.com/butenko108/penpot-api#readme",
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.60.0",
-    "axios": "^1.11.0",
-    "express": "^5.1.0",
-    "fs-extra": "^11.3.1",
-    "json-diff": "^1.0.6",
-    "jsonpath": "^1.1.1",
-    "yauzl": "^3.2.0"
-  }
+	"name": "penpot-api",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"storybook": "storybook dev -p 6006",
+		"build-storybook": "storybook build"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/butenko108/penpot-api.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/butenko108/penpot-api/issues"
+	},
+	"homepage": "https://github.com/butenko108/penpot-api#readme",
+	"dependencies": {
+		"@anthropic-ai/sdk": "^0.60.0",
+		"axios": "^1.11.0",
+		"express": "^5.1.0",
+		"fs-extra": "^11.3.1",
+		"json-diff": "^1.0.6",
+		"jsonpath": "^1.1.1",
+		"yauzl": "^3.2.0"
+	},
+	"devDependencies": {
+		"@storybook/cli": "^8.0.0",
+		"@storybook/react": "^8.0.0",
+		"@storybook/react-vite": "^8.0.0",
+		"@storybook/addon-essentials": "^8.0.0",
+		"storybook": "^8.0.0",
+		"react": "^18.0.0",
+		"react-dom": "^18.0.0"
+	}
 }
