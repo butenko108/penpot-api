@@ -7,16 +7,15 @@ const jsonDiff = require("json-diff");
 const jp = require("jsonpath");
 const Anthropic = require("@anthropic-ai/sdk");
 
+const CLAUDE_API = "";
+const PENPOT_API_ACCESS_TOKEN = "";
+
 const anthropic = new Anthropic({
-	apiKey:
-		"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",
+	apiKey: CLAUDE_API,
 });
 
 const app = express();
 app.use(express.json());
-
-const ACCESS_TOKEN =
-	"eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMjU2R0NNIn0.nczOsPYlstdkTDz5wu99rZ5913JhnKWf0AyVS3rdIRxgRIXWRWky0g.WfEFlWwo9STCZFmn.vD7fPd2YKHRkfMeDZtxkF8FfnSO14FkqOBOJNtMNVTGFfz6TpVFwomk-fEirFbdIsCwGs_rWlsGaMiaUAc7fYd6R3_Tow6SypwgUCyuM5wTtJ1sFTOiHyV5LMLCzBnvTYkV6OxgkSHw.lv2pYiYHThm4aI6c8CNA8Q";
 
 // Функция экспорта файла из Penpot
 async function exportPenpotFile(fileId) {
@@ -38,7 +37,7 @@ async function exportPenpotFile(fileId) {
 			payload,
 			{
 				headers: {
-					Authorization: `Token ${ACCESS_TOKEN}`,
+					Authorization: `Token ${PENPOT_API_ACCESS_TOKEN}`,
 					"Content-Type": "application/json",
 					Accept: "application/json",
 				},
