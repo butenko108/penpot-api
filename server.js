@@ -519,19 +519,37 @@ ${JSON.stringify(simplifiedData, null, 2)}
 // Функция генерации React компонента через Claude
 async function generateReactComponentWithClaude(componentData, componentName) {
 	const prompt = `
-Создай React компонент на основе этих данных из Penpot:
+Создай React компонент на TypeScript на основе этих данных из Penpot:
 
 Данные компонента:
 ${JSON.stringify(componentData, null, 2)}
 
 Требования:
 1. Компонент должен называться ${componentName}
-2. Используй современный React с функциональными компонентами
-3. Используй inline стили на основе данных styling и layout
-4. Включи поддержку пропсов для настройки
-5. Экспортируй компонент как default export
+2. Используй TypeScript и React.FC с типизированными пропсами
+3. Используй современный React с функциональными компонентами
+4. Используй inline стили на основе данных styling и layout
+5. Создай интерфейс Props для типизации пропсов
+6. Включи поддержку пропсов для настройки (className, style, и специфичные для компонента)
+7. Экспортируй компонент как default export
+8. Используй TypeScript синтаксис
 
-Формат ответа: только код React компонента без markdown форматирования.
+Пример структуры:
+interface ${componentName}Props {
+  className?: string;
+  style?: React.CSSProperties;
+  // другие пропсы
+}
+
+const ${componentName}: React.FC<${componentName}Props> = ({ className, style, ...props }) => {
+  return (
+    // TSX код
+  );
+};
+
+export default ${componentName};
+
+Формат ответа: только TypeScript React код без markdown блоков.
 `;
 
 	try {
@@ -546,7 +564,10 @@ ${JSON.stringify(componentData, null, 2)}
 		);
 		const rawResponse = textContent?.text || "";
 
+		// Более тщательная очистка от markdown
 		const cleanedResponse = rawResponse
+			.replace(/```tsx\s*/g, "")
+			.replace(/```typescript\s*/g, "")
 			.replace(/```jsx\s*/g, "")
 			.replace(/```javascript\s*/g, "")
 			.replace(/```\s*/g, "")
@@ -562,20 +583,36 @@ ${JSON.stringify(componentData, null, 2)}
 // Функция генерации Storybook файла через Claude
 async function generateStorybookWithClaude(componentName) {
 	const prompt = `
-Создай Storybook stories файл для React компонента ${componentName}:
+Создай Storybook stories файл на TypeScript для React компонента ${componentName}:
 
 Требования:
-1. Импортируй компонент как DEFAULT EXPORT: import ${componentName} from '../components/${componentName}.jsx'
-2. Создай несколько stories с разными состояниями
-3. Включи controls для интерактивности
-4. Используй CSF3 формат (Component Story Format 3)
-5. Добавь метаданные для компонента
-6. ОБЯЗАТЕЛЬНО используй default import, НЕ именованный import
+1. Используй TypeScript для stories файла
+2. Импортируй компонент как DEFAULT EXPORT: import ${componentName} from '../components/${componentName}';
+3. Создай типизированные stories с использованием Meta и StoryObj типов из Storybook
+4. Создай несколько stories с разными состояниями
+5. Включи controls для интерактивности в argTypes
+6. Используй CSF3 формат (Component Story Format 3)
+7. Добавь метаданные для компонента
+8. ОБЯЗАТЕЛЬНО используй default import, НЕ именованный import
 
-Пример правильного импорта: 
-import ${componentName} from '../components/${componentName}.jsx';
+Пример структуры:
+import type { Meta, StoryObj } from '@storybook/react';
+import ${componentName} from '../components/${componentName}';
 
-Формат ответа: только код Storybook stories без markdown форматирования.
+const meta: Meta<typeof ${componentName}> = {
+  title: 'Components/${componentName}',
+  component: ${componentName},
+  // остальная конфигурация
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  // конфигурация story
+};
+
+Формат ответа: только TypeScript Storybook код без markdown блоков.
 `;
 
 	try {
@@ -590,10 +627,13 @@ import ${componentName} from '../components/${componentName}.jsx';
 		);
 		const rawResponse = textContent?.text || "";
 
+		// Более тщательная очистка от markdown
 		const cleanedResponse = rawResponse
+			.replace(/```tsx\s*/g, "")
 			.replace(/```typescript\s*/g, "")
-			.replace(/```javascript\s*/g, "")
+			.replace(/```ts\s*/g, "")
 			.replace(/```jsx\s*/g, "")
+			.replace(/```javascript\s*/g, "")
 			.replace(/```\s*/g, "")
 			.trim();
 
@@ -637,12 +677,12 @@ async function generateComponentsFromSimplified(extractDir, fileId) {
 				component,
 				componentName,
 			);
-			const componentPath = path.join(componentsDir, `${componentName}.jsx`);
+			const componentPath = path.join(componentsDir, `${componentName}.tsx`);
 			await fs.writeFile(componentPath, reactCode);
 
 			// Генерируем Storybook файл
 			const storybookCode = await generateStorybookWithClaude(componentName);
-			const storyPath = path.join(storiesDir, `${componentName}.stories.jsx`);
+			const storyPath = path.join(storiesDir, `${componentName}.stories.tsx`);
 			await fs.writeFile(storyPath, storybookCode);
 
 			console.log(`✅ Сгенерирован компонент: ${componentName}`);
