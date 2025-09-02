@@ -531,7 +531,7 @@ ${JSON.stringify(componentData, null, 2)}
 5. Создай интерфейс Props для типизации пропсов
 6. Включи поддержку пропсов для настройки (className, style, и специфичные для компонента)
 7. Экспортируй компонент как default export
-8. Используй TypeScript синтаксис
+8. Импортируй в каждом компоненте "import React from 'react';"
 
 Пример структуры:
 interface ${componentName}Props {
